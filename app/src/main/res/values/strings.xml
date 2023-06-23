@@ -1,11 +1,11 @@
 <resources>
-    <string name="welcome">Welcome to AAHAR</string>
-    <string name="app_name">AAHAR APP</string>
+    <string name="welcome">Sattva</string>
+    <string name="app_name">Sattva App</string>
     <string name="prompt_email">Email</string>
     <string name="prompt_password">Password</string>
     <string name="about">About Us</string>
     <string name="history">History</string>
-    <string name="aboutus">AAHAR provides the right channels for compassionate citizens to begin and manage initiatives, that solve for hunger locally. Our mission is to make India hunger free</string>
+    <string name="aboutus">Sattva is the best place to begin and manage food initiatives, whether you are an individual, group or an organization. We believe anyone can make good things happen. So can you! Donate food today and help us in our mission to make India hunger free.</string>
     <string name="login">Login</string>
     <string name="donate">Donate</string>
     <string name="message">Message</string>

@@ -8,6 +8,7 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -59,6 +60,9 @@ public class Receive extends AppCompatActivity implements OnMapReadyCallback, Go
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_receive);
+        SQLiteDatabase mdb=openOrCreateDatabase("ahhar.db",MODE_PRIVATE,null);
+        mdb.execSQL("create table if not exists recieve(fullname varchar,description varchar,type varchar);");
+
         mFullName = findViewById(R.id.receivername);
         mDescription = findViewById(R.id.description);
         mSubmitBtn=findViewById(R.id.submit);
@@ -72,6 +76,63 @@ public class Receive extends AppCompatActivity implements OnMapReadyCallback, Go
         } else {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CODE);
         }
+        mSubmitBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String fullname = mFullName.getText().toString().trim();
+                String description= mDescription.getText().toString().trim();
+                String type= "Receiver";
+
+                if(TextUtils.isEmpty(fullname))
+                {
+                    mFullName.setError("Name is Required.");
+                    return;
+                }
+                if(TextUtils.isEmpty(description))
+                {
+                    mFullName.setError("Description is Required.");
+                    return;
+                }
+                mdb.execSQL("insert into recieve values('"+fullname+"','"+description+"','"+type+"'); ");
+                Toast.makeText(Receive.this,"inserted succesfully",Toast.LENGTH_SHORT).show();
+
+
+
+                userID = fAuth.getCurrentUser().getUid();
+                //DocumentReference documentReference = fStore.collection("receiver").document(userID);
+                CollectionReference collectionReference = fStore.collection("user data");
+
+               // GeoPoint geoPoint = new GeoPoint(location.getLatitude(),location.getLongitude());
+                Map<String,Object> user = new HashMap<>();
+                user.put("timestamp", FieldValue.serverTimestamp());
+                user.put("name",fullname);
+                user.put("description",description);
+               // user.put("location",geoPoint);
+                user.put("userid",userID);
+                user.put("type",type);
+
+                collectionReference.add(user)
+                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                            @Override
+                            public void onSuccess(DocumentReference documentReference) {
+                                Toast.makeText(getApplicationContext(),"Success!",Toast.LENGTH_SHORT).show();
+                                Log.d(TAG,"Success!");
+                                //startActivity(new Intent(getApplicationContext(),MainActivity.class));
+                                Intent intent = new Intent(Receive.this, MainActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(getApplicationContext(),"Error!",Toast.LENGTH_SHORT).show();
+                                Log.w(TAG, "Error!", e);
+                            }
+                        });
+
+            }
+        });
 
 
     }
@@ -109,60 +170,7 @@ public class Receive extends AppCompatActivity implements OnMapReadyCallback, Go
         mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,15));
         mMap.addMarker(markerOptions).showInfoWindow();
 
-        mSubmitBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String fullname = mFullName.getText().toString().trim();
-                String description= mDescription.getText().toString().trim();
-                String type= "Receiver";
 
-                if(TextUtils.isEmpty(fullname))
-                {
-                    mFullName.setError("Name is Required.");
-                    return;
-                }
-                if(TextUtils.isEmpty(description))
-                {
-                    mFullName.setError("Description is Required.");
-                    return;
-                }
-
-
-                userID = fAuth.getCurrentUser().getUid();
-                //DocumentReference documentReference = fStore.collection("receiver").document(userID);
-                CollectionReference collectionReference = fStore.collection("user data");
-
-                GeoPoint geoPoint = new GeoPoint(location.getLatitude(),location.getLongitude());
-                Map<String,Object> user = new HashMap<>();
-                user.put("timestamp", FieldValue.serverTimestamp());
-                user.put("name",fullname);
-                user.put("description",description);
-                user.put("location",geoPoint);
-                user.put("userid",userID);
-                user.put("type",type);
-
-                collectionReference.add(user)
-                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                            @Override
-                            public void onSuccess(DocumentReference documentReference) {
-                                Toast.makeText(getApplicationContext(),"Success!",Toast.LENGTH_SHORT).show();
-                                Log.d(TAG,"Success!");
-                                //startActivity(new Intent(getApplicationContext(),MainActivity.class));
-                                Intent intent = new Intent(Receive.this, MainActivity.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                                startActivity(intent);
-                            }
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Toast.makeText(getApplicationContext(),"Error!",Toast.LENGTH_SHORT).show();
-                                Log.w(TAG, "Error!", e);
-                            }
-                        });
-
-            }
-        });
     }
 
     @Override

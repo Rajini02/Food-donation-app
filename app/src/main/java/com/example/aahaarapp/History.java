@@ -1,11 +1,13 @@
 package com.example.aahaarapp;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -27,6 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class History extends AppCompatActivity {
+    Button show1;
 
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private CollectionReference notebookref = db.collection("user data");
@@ -40,9 +43,27 @@ public class History extends AppCompatActivity {
         setContentView(R.layout.activity_history);
         fAuth= FirebaseAuth.getInstance();
         textViewData=findViewById(R.id.data);
+        //show1=findViewById(R.id.show);
+        show1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                loadNotes();
+                /*String test="hello ";
+                AlertDialog.Builder builder=new AlertDialog.Builder(History.this);
+                builder.setCancelable(true);
+                builder.setTitle("data");
+                builder.setMessage(test);
+                builder.show();*/
 
-        loadNotes();
+            }
+        });
+
+
+
+
     }
+
+
 
     public void loadNotes() {
         notebookref.get()
@@ -69,14 +90,19 @@ public class History extends AppCompatActivity {
                                         data += "Name: " + name + "\nUser Type: " + type + "\nDescription: " + description + "\nDate & Time: " + dateandtime + "\n\n";
                                         //data += "Name: " + name + "\nUser Type: " + type + "\nDescription: " + description + "\n";
                                     }
-                                    textViewData.setText(data);
+                                    AlertDialog.Builder builder=new AlertDialog.Builder(History.this);
+                                    builder.setCancelable(true);
+                                    builder.setTitle("data");
+                                    builder.setMessage(data);
+                                    builder.show();
                                 }
                             }
-                            //textViewData.setText(data);
+                            textViewData.setText(data);
                         } else {
                             Log.d(TAG, "Error fetching data: ", task.getException());
                         }
                     }
                 });
+
     }
 }

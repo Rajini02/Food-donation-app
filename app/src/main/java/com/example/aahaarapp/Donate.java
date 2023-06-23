@@ -2,12 +2,15 @@ package com.example.aahaarapp;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -33,6 +36,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
@@ -56,9 +60,13 @@ public class Donate extends AppCompatActivity implements OnMapReadyCallback, Goo
     String userID;
     public static final String TAG = "TAG";
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        SQLiteDatabase mdb=openOrCreateDatabase("ahhar.db",MODE_PRIVATE,null);
+        mdb.execSQL("create table if not exists donate(fullname varchar,fooditem varchar,phone varchar,description varchar,type varchar);");
+
         setContentView(R.layout.activity_donate);
         mFullName = findViewById(R.id.donorname);
         mFoodItem = findViewById(R.id.fooditem);
@@ -66,8 +74,113 @@ public class Donate extends AppCompatActivity implements OnMapReadyCallback, Goo
         mDescription = findViewById(R.id.description);
         mSubmitBtn=findViewById(R.id.submit);
 
+
         fAuth=FirebaseAuth.getInstance();
         fStore= FirebaseFirestore.getInstance();
+        mSubmitBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String fullname = mFullName.getText().toString().trim();
+                String fooditem= mFoodItem.getText().toString().trim();
+                String description= mDescription.getText().toString().trim();
+                String phone= mPhone.getText().toString().trim();
+                String type= "Donor";
+
+                if(TextUtils.isEmpty(fullname))
+                {
+                    mFullName.setError("Name is Required.");
+                    return;
+                }
+
+                if(TextUtils.isEmpty(fooditem))
+                {
+                    mFoodItem.setError("Required.");
+                    return;
+                }
+
+                if(phone.length() < 10)
+                {
+                    mPhone.setError("Phone Number Must be >=10 Characters");
+                    return;
+                }
+                mdb.execSQL("insert into donate values('"+fullname+"','"+fooditem+"','"+description+"','"+phone+"','"+type+"'); ");
+                Toast.makeText(Donate.this,"inserted succesfully",Toast.LENGTH_SHORT).show();
+
+
+
+
+                userID = fAuth.getCurrentUser().getUid();
+                //DocumentReference documentReference = fStore.collection("donate").document(userID);
+                CollectionReference collectionReference = fStore.collection("user data");
+
+                //GeoPoint geoPoint = new GeoPoint(location.getLatitude(),location.getLongitude());
+                Map<String,Object> user = new HashMap<>();
+                user.put("timestamp", FieldValue.serverTimestamp());
+                user.put("name",fullname);
+                user.put("food item",fooditem);
+                user.put("phone",phone);
+                user.put("description",description);
+               // user.put("location",geoPoint);
+                user.put("userid",userID);
+                user.put("type",type);
+
+                collectionReference.add(user)
+                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                            @Override
+                            public void onSuccess(DocumentReference documentReference) {
+                                Toast.makeText(getApplicationContext(),"Success!",Toast.LENGTH_SHORT).show();
+                                Log.d(TAG,"Success!");
+                                //startActivity(new Intent(getApplicationContext(),MainActivity.class));
+                                Intent intent = new Intent(Donate.this, MainActivity.class);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                               /* Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_SHORT).show();
+                                Log.d(TAG, "Success!");
+
+                                // Access the entered data
+                                String documentId = documentReference.getId(); // Retrieve the auto-generated document ID
+                                DocumentReference addedDocumentRef = collectionReference.document(documentId); // Get the reference to the added document
+
+                                // Access the fields in the added document
+                                addedDocumentRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                                    @Override
+                                    public void onSuccess(DocumentSnapshot documentSnapshot) {
+                                        if (documentSnapshot.exists()) {
+                                            String name = documentSnapshot.getString("name");
+                                            String foodItem = documentSnapshot.getString("food item");
+                                            String phone = documentSnapshot.getString("phone");
+                                            // Access other fields as needed
+
+                                            // Display the retrieved data using AlertDialog
+                                            AlertDialog.Builder builder = new AlertDialog.Builder(Donate.this);
+                                            builder.setTitle("User Data");
+                                            builder.setMessage("Name: " + name + "\nFood Item: " + foodItem + "\nPhone: " + phone);
+                                            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                                @Override
+                                                public void onClick(DialogInterface dialogInterface, int i) {
+                                                    // Handle OK button click if needed
+                                                }
+                                            });
+                                            AlertDialog alertDialog = builder.create();
+                                            alertDialog.show();
+                                        } else {
+                                            Log.d(TAG, "Document does not exist");
+                                        }
+                                    }
+                                });*/
+                            }
+
+
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Toast.makeText(getApplicationContext(),"Error!",Toast.LENGTH_SHORT).show();
+                                Log.w(TAG, "Error!", e);
+                            }
+                        });
+            }
+        });
 
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.google_map);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -111,69 +224,7 @@ public class Donate extends AppCompatActivity implements OnMapReadyCallback, Goo
         mMap.addMarker(markerOptions).showInfoWindow();
 
 
-        mSubmitBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String fullname = mFullName.getText().toString().trim();
-                String fooditem= mFoodItem.getText().toString().trim();
-                String description= mDescription.getText().toString().trim();
-                String phone= mPhone.getText().toString().trim();
-                String type= "Donor";
 
-                if(TextUtils.isEmpty(fullname))
-                {
-                    mFullName.setError("Name is Required.");
-                    return;
-                }
-
-                if(TextUtils.isEmpty(fooditem))
-                {
-                    mFoodItem.setError("Required.");
-                    return;
-                }
-
-                if(phone.length() < 10)
-                {
-                    mPhone.setError("Phone Number Must be >=10 Characters");
-                    return;
-                }
-
-                userID = fAuth.getCurrentUser().getUid();
-                //DocumentReference documentReference = fStore.collection("donate").document(userID);
-                CollectionReference collectionReference = fStore.collection("user data");
-
-                GeoPoint geoPoint = new GeoPoint(location.getLatitude(),location.getLongitude());
-                Map<String,Object> user = new HashMap<>();
-                user.put("timestamp", FieldValue.serverTimestamp());
-                user.put("name",fullname);
-                user.put("food item",fooditem);
-                user.put("phone",phone);
-                user.put("description",description);
-                user.put("location",geoPoint);
-                user.put("userid",userID);
-                user.put("type",type);
-
-                collectionReference.add(user)
-                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-                            @Override
-                            public void onSuccess(DocumentReference documentReference) {
-                                Toast.makeText(getApplicationContext(),"Success!",Toast.LENGTH_SHORT).show();
-                                Log.d(TAG,"Success!");
-                                //startActivity(new Intent(getApplicationContext(),MainActivity.class));
-                                Intent intent = new Intent(Donate.this, MainActivity.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                                startActivity(intent);
-                            }
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Toast.makeText(getApplicationContext(),"Error!",Toast.LENGTH_SHORT).show();
-                                Log.w(TAG, "Error!", e);
-                            }
-                        });
-            }
-        });
     }
 
     @Override
