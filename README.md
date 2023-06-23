@@ -7,11 +7,11 @@ The irony cannot go unnoticed. With millions of hungry to feed, the gap b/w the 
 Flowchart of the working of the application:
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/54005333/118606061-97a42980-b7d4-11eb-9d27-5981ee170fb2.png">
+![image](https://github.com/Rajini02/Food-donation-app/assets/115108376/14f1ae35-9af7-4c85-980a-ec2060d148f5)
 </p>
 
 Worklfow Diagram of the Application: 
-![image](https://github.com/Rajini02/Food-donation-app/assets/115108376/14f1ae35-9af7-4c85-980a-ec2060d148f5)
+
 
 <p align="center" float="left">
 <table>
